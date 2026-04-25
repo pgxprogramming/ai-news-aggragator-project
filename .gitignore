@@ -8,3 +8,35 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Environment variables
+.env
+
+# IDE
+.idea
+.vscode
+*.code-workspace
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Logs
+logs/
+*.log
+
+# Testing
+.pytest_cache
+
+# Database
+instance/
+*.sqlite
+
+# Deployment
+.deploy/
+
+# Any editor-specific settings
+*~
