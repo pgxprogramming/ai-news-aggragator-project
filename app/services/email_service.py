@@ -10,7 +10,15 @@ from typing import Optional, List
 load_dotenv()
 
 raw_recipients = os.getenv("RECIPIENTS", "")
-RECIPIENTS = [r.strip() for r in raw_recipients.split(",")] if raw_recipients else []
+RECIPIENT_INFO = {}
+if raw_recipients:
+    for item in raw_recipients.split(","):
+        parts = item.split(":")
+        if len(parts) == 2:
+            RECIPIENT_INFO[parts[0].strip()] = parts[1].strip()
+        else:
+            RECIPIENT_INFO[item.strip()] = "Subscriber"
+
 MY_EMAIL = os.getenv("MY_EMAIL")
 APP_PASSWORD = os.getenv("APP_PASSWORD")
 
@@ -19,9 +27,9 @@ def send_email(subject: str, body_text: str, body_html: str = None, recipients: 
     if recipients is None:
         if not MY_EMAIL:
             raise ValueError("MY_EMAIL environment variable is not set")
-        recipients = [MY_EMAIL] + RECIPIENTS
+        recipients = [MY_EMAIL] + list(RECIPIENT_INFO.keys())
     
-    recipients = [r for r in recipients if r is not None]
+    recipients = list(set([r for r in recipients if r is not None]))
     if not recipients:
         raise ValueError("No valid recipients provided")
     
@@ -30,21 +38,29 @@ def send_email(subject: str, body_text: str, body_html: str = None, recipients: 
     if not APP_PASSWORD:
         raise ValueError("APP_PASSWORD environment variable is not set")
     
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = MY_EMAIL
-    msg["To"] = ", ".join(recipients)
-    
-    part1 = MIMEText(body_text, "plain")
-    msg.attach(part1)
-    
-    if body_html:
-        part2 = MIMEText(body_html, "html")
-        msg.attach(part2)
-    
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
         smtp.login(MY_EMAIL, APP_PASSWORD)
-        smtp.sendmail(MY_EMAIL, recipients, msg.as_string())
+        
+        for email in recipients:
+            name = RECIPIENT_INFO.get(email, "Developer")
+            
+            # Personalize content
+            personalized_text = body_text.replace("{RECIPIENT_NAME}", name)
+            personalized_html = body_html.replace("{RECIPIENT_NAME}", name) if body_html else None
+            
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"] = MY_EMAIL
+            msg["To"] = email
+            
+            part1 = MIMEText(personalized_text, "plain")
+            msg.attach(part1)
+            
+            if personalized_html:
+                part2 = MIMEText(personalized_html, "html")
+                msg.attach(part2)
+                
+            smtp.sendmail(MY_EMAIL, [email], msg.as_string())
 
 
 def markdown_to_html(markdown_text: str) -> str:
