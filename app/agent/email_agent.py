@@ -63,7 +63,10 @@ Keep it concise (2-3 sentences for the introduction), friendly, and professional
 
 class EmailAgent:
     def __init__(self, user_profile: dict):
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.client = OpenAI(
+            base_url="https://models.inference.ai.azure.com",
+            api_key=os.getenv("GITHUB_TOKEN")
+        )
         self.model = "gpt-4o-mini"
         self.user_profile = user_profile
 
@@ -89,15 +92,17 @@ Top 10 ranked articles:
 Generate a greeting and introduction that previews these articles."""
 
         try:
-            response = self.client.responses.parse(
+            response = self.client.beta.chat.completions.parse(
                 model=self.model,
-                instructions=EMAIL_PROMPT,
+                messages=[
+                    {"role": "system", "content": EMAIL_PROMPT},
+                    {"role": "user", "content": user_prompt}
+                ],
                 temperature=0.7,
-                input=user_prompt,
-                text_format=EmailIntroduction
+                response_format=EmailIntroduction
             )
             
-            intro = response.output_parsed
+            intro = response.choices[0].message.parsed
             if not intro.greeting.startswith(f"Hey {self.user_profile['name']}"):
                 intro.greeting = f"Hey {self.user_profile['name']}, here is your daily digest of AI news for {current_date}."
             

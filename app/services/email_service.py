@@ -5,18 +5,21 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
 import markdown
+from typing import Optional, List
 
 load_dotenv()
 
+raw_recipients = os.getenv("RECIPIENTS", "")
+RECIPIENTS = [r.strip() for r in raw_recipients.split(",")] if raw_recipients else []
 MY_EMAIL = os.getenv("MY_EMAIL")
 APP_PASSWORD = os.getenv("APP_PASSWORD")
 
 
-def send_email(subject: str, body_text: str, body_html: str = None, recipients: list = None):
+def send_email(subject: str, body_text: str, body_html: str = None, recipients: Optional[List[str]] = None):
     if recipients is None:
         if not MY_EMAIL:
             raise ValueError("MY_EMAIL environment variable is not set")
-        recipients = [MY_EMAIL]
+        recipients = [MY_EMAIL] + RECIPIENTS
     
     recipients = [r for r in recipients if r is not None]
     if not recipients:
