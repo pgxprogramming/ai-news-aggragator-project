@@ -1,3 +1,6 @@
+import os
+os.environ["PROCESSOR_IDENTIFIER"] = "AMD64"
+
 from app.daily_runner import run_daily_pipeline
 
 

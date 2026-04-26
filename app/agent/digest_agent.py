@@ -25,7 +25,10 @@ Guidelines:
 
 class DigestAgent:
     def __init__(self):
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.client = OpenAI(
+            base_url="https://models.inference.ai.azure.com",
+            api_key=os.getenv("GITHUB_TOKEN")
+        )
         self.model = "gpt-4o-mini"
         self.system_prompt = PROMPT
 
@@ -33,15 +36,17 @@ class DigestAgent:
         try:
             user_prompt = f"Create a digest for this {article_type}: \n Title: {title} \n Content: {content[:8000]}"
 
-            response = self.client.responses.parse(
+            response = self.client.beta.chat.completions.parse(
                 model=self.model,
-                instructions=self.system_prompt,
+                messages=[
+                    {"role": "system", "content": self.system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
                 temperature=0.7,
-                input=user_prompt,
-                text_format=DigestOutput
+                response_format=DigestOutput
             )
             
-            return response.output_parsed
+            return response.choices[0].message.parsed
         except Exception as e:
             print(f"Error generating digest: {e}")
             return None
